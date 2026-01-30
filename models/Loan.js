@@ -158,13 +158,25 @@ const LoanSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Generate Loan ID before saving
+// ✅ FIXED: Generate Loan ID before saving
 LoanSchema.pre('save', async function(next) {
   try {
-    // Generate loanId if it doesn't exist
     if (!this.loanId) {
-      const count = await this.constructor.countDocuments();
-      this.loanId = `LOAN${String(count + 1).padStart(6, '0')}`;
+      // Find the loan with the highest loanId
+      const lastLoan = await this.constructor
+        .findOne({}, { loanId: 1 })
+        .sort({ loanId: -1 })
+        .lean();
+
+      let nextNumber = 1;
+      
+      if (lastLoan && lastLoan.loanId) {
+        // Extract the number from "LOAN000010" -> 10
+        const lastNumber = parseInt(lastLoan.loanId.replace('LOAN', ''));
+        nextNumber = lastNumber + 1;
+      }
+
+      this.loanId = `LOAN${String(nextNumber).padStart(6, '0')}`;
     }
     next();
   } catch (error) {

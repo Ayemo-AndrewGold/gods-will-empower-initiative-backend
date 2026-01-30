@@ -207,8 +207,21 @@ const CustomerSchema = new mongoose.Schema({
 CustomerSchema.pre('save', async function(next) {
   try {
     if (!this.customerId) {
-      const count = await this.constructor.countDocuments();
-      this.customerId = `CUST${String(count + 1).padStart(5, '0')}`;
+      // Find the customer with the highest customerId
+      const lastCustomer = await this.constructor
+        .findOne({}, { customerId: 1 })
+        .sort({ customerId: -1 })
+        .lean();
+
+      let nextNumber = 1;
+      
+      if (lastCustomer && lastCustomer.customerId) {
+        // Extract the number from "CUST00010" -> 10
+        const lastNumber = parseInt(lastCustomer.customerId.replace('CUST', ''));
+        nextNumber = lastNumber + 1;
+      }
+
+      this.customerId = `CUST${String(nextNumber).padStart(5, '0')}`;
     }
     next();
   } catch (error) {

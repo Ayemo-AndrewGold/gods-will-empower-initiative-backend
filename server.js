@@ -14,7 +14,6 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "https://gods-will-empower-initiative.vercel.app",
-  "https://godswillempowerment.netlify.app",
   process.env.FRONTEND_URL,
 ];
 
